@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testowanie Algorytmu</title>
+    <style>
+        #progress-bar {
+            width: 100%;
+            background-color: #ddd;
+        }
+        #progress {
+            width: 0%;
+            height: 30px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+    </style>
+    <script>
+        let algorithmName = "{{ algorithm_name }}";
+
+        function updateProgress() {
+            fetch(`/algorithm/${algorithmName}/progress/`)
+                .then(response => response.json())
+                .then(data => {
+                    const progressElement = document.getElementById("progress");
+                    if (data.status === "running") {
+                        progressElement.style.width = data.progress + "%";
+                        progressElement.innerText = data.progress + "%";
+                    } else if (data.status === "completed") {
+                        alert("Algorytm zakończony! Wynik: " + JSON.stringify(data.result));
+                        clearInterval(interval);
+                    } else if (data.status === "error") {
+                        alert("Wystąpił błąd: " + data.error);
+                        clearInterval(interval);
+                    }
+                });
+        }
+
+        function startAlgorithm() {
+            fetch(`/algorithm/${algorithmName}/start/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "started") {
+                        interval = setInterval(updateProgress, 500);
+                    } else {
+                        alert("Algorytm już działa.");
+                    }
+                });
+        }
+
+        let interval;
+    </script>
+</head>
+<body>
+    <h1>Testowanie Algorytmu: {{ algorithm_name }}</h1>
+    <button onclick="startAlgorithm()">Start</button>
+    <h3>Postęp:</h3>
+    <div id="progress-bar">
+        <div id="progress">0%</div>
+    </div>
+</body>
+</html>
