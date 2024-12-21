@@ -1,89 +1,118 @@
-import threading
-import time
-import numpy as np
+import os
+import json
+from django.conf import settings
+from django.http import JsonResponse, FileResponse, HttpResponse
 from django.shortcuts import render
-from django.http import JsonResponse
+from openpyxl import Workbook
 from .algorithms import jellyfish_search, artificial_bee_colony
-from .test_functions import rastrigin, rastrigin_properties  # Przykład z benchmarków
-import threading
 
-# Zmienna do przechowywania aktywnych wątków
-current_threads = {}
-algorithm_states = {}  # Przechowywanie stanu algorytmów (PAUSED, RUNNING, itp.)
+from .test_functions import (
+    rastrigin, rastrigin_properties,
+    rosenbrock, rosenbrock_properties,
+    sphere, sphere_properties,
+    beale, beale_properties,
+    bukin, bukin_properties,
+    himmelblaus, himmelblaus_properties
+)
+
+
+FUNCTIONS = {
+    'Rastrigin': (rastrigin, rastrigin_properties),
+    'Rosenbrock': (rosenbrock, rosenbrock_properties),
+    'Sphere': (sphere, sphere_properties),
+    'Beale': (beale, beale_properties),
+    'Bukin': (bukin, bukin_properties),
+    'Himmelblaus': (himmelblaus, himmelblaus_properties),
+}
+
+ALGORITHMS = {
+    "Jellyfish Search": jellyfish_search,
+    "Artificial Bee Colony": artificial_bee_colony,
+}
 
 
 def home(request):
-    """Strona główna."""
-    return render(request, 'home.html')
+    algorithms = list(ALGORITHMS.keys())
+    return render(request, "home.html", {"algorithms": algorithms})
 
 
-def sphere(x):
-    return sum(xi ** 2 for xi in x)
-
-
-# Helper funkcja do uruchamiania algorytmów
-def run_algorithm_in_background(algorithm_name, func, params):
-    """
-    Funkcja uruchamia algorytm w tle, aktualizuje stan i postęp algorytmu.
-    """
-    global algorithm_states
-    progress = 0
-    algorithm_states[algorithm_name] = {'status': 'running', 'progress': progress, 'result': None}
-
-    def algorithm_runner():
-        nonlocal progress
-        try:
-            lower = params['lower_boundary']
-            upper = params['upper_boundary']
-            dimensions = params['dimensions']
-
-            # Uruchomienie odpowiedniego algorytmu
-            if algorithm_name == "jellyfish":
-                result, fitness = jellyfish_search(func, dimensions, lower, upper, 30, 100)
-            elif algorithm_name == "bee_colony":
-                result, fitness = artificial_bee_colony(func, lower, upper, dimensions, 30, 100, 20)
-            else:
-                raise ValueError("Nieznany algorytm.")
-
-            algorithm_states[algorithm_name]['status'] = 'completed'
-            algorithm_states[algorithm_name]['result'] = {'solution': result.tolist(), 'fitness': fitness}
-        except Exception as e:
-            algorithm_states[algorithm_name]['status'] = 'error'
-            algorithm_states[algorithm_name]['error'] = str(e)
-
-    threading.Thread(target=algorithm_runner).start()
-
-
-# Widok strony testowej
 def algorithm_test(request, algorithm_name):
-    """
-    Renderuje stronę HTML do testowania algorytmów.
-    """
-    return render(request, 'algorithm_test.html', {'algorithm_name': algorithm_name})
+    return render(request, "algorithm_test.html", {"algorithm_name": algorithm_name, "functions": FUNCTIONS})
 
 
-# Rozpoczęcie algorytmu
-def start_algorithm(request, algorithm_name):
-    """
-    Uruchamia wybrany algorytm.
-    """
-    if algorithm_states.get(algorithm_name, {}).get('status') in ['running', 'paused']:
-        return JsonResponse({'status': 'already_running'})
+def start_algorithm(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        algorithm_name = data["algorithm"]
+        function_name = data["function"]
+        dimensions = int(data["dimensions"])
+        population_size = int(data["population_size"])
+        max_iterations = int(data["max_iterations"])
 
-    # Parametry dla algorytmów - można je dostosować dynamicznie
-    func = rastrigin  # Przykład funkcji celu
-    params = rastrigin_properties()
-    params['dimensions'] = 10  # Ustawienie wymiaru dla testu
+        if algorithm_name not in ALGORITHMS:
+            return JsonResponse({"error": "Algorithm not found."}, status=400)
 
-    run_algorithm_in_background(algorithm_name, func, params)
-    return JsonResponse({'status': 'started'})
+        if function_name not in FUNCTIONS:
+            return JsonResponse({"error": "Function not found."}, status=400)
+
+        objective_function, properties = FUNCTIONS[function_name]
+        lower_boundary = properties()['lower_boundary']
+        upper_boundary = properties()['upper_boundary']
+
+        algorithm_function = ALGORITHMS[algorithm_name]
+
+        if algorithm_name == "Jellyfish Search":
+            best_solution, best_fitness = algorithm_function(
+                objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
+            )
+        elif algorithm_name == "Artificial Bee Colony":
+            best_solution, best_fitness = algorithm_function(
+                objective_function, lower_boundary, upper_boundary, dimensions, population_size, max_iterations
+            )
+        else:
+            return JsonResponse({"error": "Algorithm implementation is missing."}, status=500)
 
 
-# Postęp algorytmu
-def algorithm_progress(request, algorithm_name):
-    """
-    Zwraca status i postęp działania algorytmu.
-    """
-    state = algorithm_states.get(algorithm_name, {'status': 'not_started', 'progress': 0})
-    return JsonResponse(state)
 
+
+
+
+        results_file_cls = f'results_{algorithm_name.lower().replace(" ", "_")}_{function_name.lower()}.cls'
+        results_path_cls = os.path.join(settings.MEDIA_ROOT, results_file_cls)
+        with open(results_path_cls, "w") as f:
+            f.write("Algorithm Results\n")
+            f.write(f"Algorithm: {algorithm_name}\n")
+            f.write(f"Function: {function_name}\n")
+            f.write(f"Dimensions: {dimensions}\n")
+            f.write(f"Population Size: {population_size}\n")
+            f.write(f"Max Iterations: {max_iterations}\n")
+            f.write(f"Best Solution: {best_solution}\n")
+            f.write(f"Best Fitness: {best_fitness}\n")
+
+        results_file_xlsx = f'results_{algorithm_name.lower().replace(" ", "_")}_{function_name.lower()}.xlsx'
+        results_path_xlsx = os.path.join(settings.MEDIA_ROOT, results_file_xlsx)
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Results"
+        ws.append(["Algorithm", "Function", "Dimensions", "Population Size", "Max Iterations", "Best Solution", "Best Fitness"])
+        ws.append([algorithm_name, function_name, dimensions, population_size, max_iterations, str(best_solution), best_fitness])
+        wb.save(results_path_xlsx)
+
+        return JsonResponse({
+            "message": "Algorithm executed successfully.",
+            "results_file_cls": results_file_cls,
+            "results_file_xlsx": results_file_xlsx,
+            "benchmark_output": os.path.join("benchmarks", f"benchmark_{algorithm_name.lower().replace(' ', '_')}.csv")
+        })
+
+    return HttpResponse(status=400)
+
+
+def download_results(request, filename):
+    file_path = os.path.join(settings.MEDIA_ROOT, filename)
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, "rb"), content_type="application/octet-stream")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+    else:
+        return HttpResponse("File not found.", status=404)

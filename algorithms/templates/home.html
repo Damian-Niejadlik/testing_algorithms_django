@@ -1,14 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Home</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'js/script.js' %}" defer></script>
 </head>
 <body>
-    <h1>Wybierz Algorytm</h1>
+    <h1>Select an Algorithm to Test</h1>
     <ul>
-        <li><a href="{% url 'algorithm_test' algorithm_name='jellyfish' %}">Jellyfish Search</a></li>
-        <li><a href="{% url 'algorithm_test' algorithm_name='bee_colony' %}">Artificial Bee Colony</a></li>
+        {% for algorithm in algorithms %}
+        <li>
+            <a href="{% url 'algorithm_test' algorithm %}">{{ algorithm }}</a>
+        </li>
+        {% endfor %}
     </ul>
 </body>
 </html>

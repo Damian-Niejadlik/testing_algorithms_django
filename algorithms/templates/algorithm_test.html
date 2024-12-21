@@ -2,63 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Testowanie Algorytmu</title>
-    <style>
-        #progress-bar {
-            width: 100%;
-            background-color: #ddd;
-        }
-        #progress {
-            width: 0%;
-            height: 30px;
-            background-color: #4caf50;
-            text-align: center;
-            line-height: 30px;
-            color: white;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Test</title>
+     {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <script>
-        let algorithmName = "{{ algorithm_name }}";
+        async function startAlgorithm() {
+            const algorithmName = "{{ algorithm_name }}";
+            const functionName = document.getElementById("functionSelect").value;
+            const dimensions = document.getElementById("dimensions").value;
+            const populationSize = document.getElementById("populationSize").value;
+            const maxIterations = document.getElementById("maxIterations").value;
 
-        function updateProgress() {
-            fetch(`/algorithm/${algorithmName}/progress/`)
-                .then(response => response.json())
-                .then(data => {
-                    const progressElement = document.getElementById("progress");
-                    if (data.status === "running") {
-                        progressElement.style.width = data.progress + "%";
-                        progressElement.innerText = data.progress + "%";
-                    } else if (data.status === "completed") {
-                        alert("Algorytm zakończony! Wynik: " + JSON.stringify(data.result));
-                        clearInterval(interval);
-                    } else if (data.status === "error") {
-                        alert("Wystąpił błąd: " + data.error);
-                        clearInterval(interval);
-                    }
-                });
+            const response = await fetch("{% url 'start_algorithm' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    algorithm: algorithmName,
+                    function: functionName,
+                    dimensions: dimensions,
+                    population_size: populationSize,
+                    max_iterations: maxIterations
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const clsDownloadLink = `/download/${data.results_file_cls}`;
+                const xlsxDownloadLink = `/download/${data.results_file_xlsx}`;
+
+                document.getElementById("results").innerHTML = `
+                    <p>Algorithm executed successfully!</p>
+                    <a href="${clsDownloadLink}" download>Download .cls</a><br>
+                    <a href="${xlsxDownloadLink}" download>Download .xlsx</a>
+                `;
+            } else {
+                document.getElementById("results").innerHTML = `<p>Error: ${data.error || "Unknown error occurred"}</p>`;
+            }
         }
-
-        function startAlgorithm() {
-            fetch(`/algorithm/${algorithmName}/start/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === "started") {
-                        interval = setInterval(updateProgress, 500);
-                    } else {
-                        alert("Algorytm już działa.");
-                    }
-                });
-        }
-
-        let interval;
     </script>
 </head>
 <body>
-    <h1>Testowanie Algorytmu: {{ algorithm_name }}</h1>
+    <h1>Test Algorithm: {{ algorithm_name }}</h1>
+    <label for="functionSelect">Select Function:</label>
+    <select id="functionSelect">
+        {% for func_name in functions %}
+        <option value="{{ func_name }}">{{ func_name }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <label for="dimensions">Dimensions:</label>
+    <input type="number" id="dimensions" value="2"><br><br>
+
+    <label for="populationSize">Population Size:</label>
+    <input type="number" id="populationSize" value="50"><br><br>
+
+    <label for="maxIterations">Max Iterations:</label>
+    <input type="number" id="maxIterations" value="100"><br><br>
+
     <button onclick="startAlgorithm()">Start</button>
-    <h3>Postęp:</h3>
-    <div id="progress-bar">
-        <div id="progress">0%</div>
-    </div>
+
+    <div id="results"></div>
 </body>
 </html>
