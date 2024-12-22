@@ -61,11 +61,11 @@ def start_algorithm(request):
 
         algorithm_function = ALGORITHMS[algorithm_name]
 
-        if algorithm_name == "Jellyfish Search":
+        if algorithm_name == "Jellyfish Search" or "Jellyfish%20Search":
             best_solution, best_fitness = algorithm_function(
                 objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
             )
-        elif algorithm_name == "Artificial Bee Colony":
+        elif algorithm_name == "Artificial Bee Colony" or "Artificial%20Bee%20Colony":
             best_solution, best_fitness = algorithm_function(
                 objective_function, lower_boundary, upper_boundary, dimensions, population_size, max_iterations
             )
