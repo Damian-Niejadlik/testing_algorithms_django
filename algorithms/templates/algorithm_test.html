@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algorithm Test</title>
-     {% load static %}
+    <title>Algorithm Test: {{ algorithm_name }}</title>
+    {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
         body {
@@ -60,8 +60,8 @@
     </style>
     <script>
         async function startAlgorithm() {
-            const algorithmName = "{{ algorithm_name }}";
-            const functionName = document.getElementById("functionSelect").value;
+            const algorithmName = encodeURIComponent("{{ algorithm_name }}"); // Encode algorithm name
+            const functionName = encodeURIComponent(document.getElementById("functionSelect").value); // Encode function name
             const dimensions = document.getElementById("dimensions").value;
             const populationSize = document.getElementById("populationSize").value;
             const maxIterations = document.getElementById("maxIterations").value;

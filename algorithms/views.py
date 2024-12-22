@@ -1,5 +1,6 @@
 import os
 import json
+from urllib.parse import unquote
 from django.conf import settings
 from django.http import JsonResponse, FileResponse, HttpResponse
 from django.shortcuts import render
@@ -14,7 +15,6 @@ from .test_functions import (
     bukin, bukin_properties,
     himmelblaus, himmelblaus_properties
 )
-
 
 FUNCTIONS = {
     'Rastrigin': (rastrigin, rastrigin_properties),
@@ -37,17 +37,26 @@ def home(request):
 
 
 def algorithm_test(request, algorithm_name):
+    algorithm_name = unquote(algorithm_name)  # Decode URL parameter
     return render(request, "algorithm_test.html", {"algorithm_name": algorithm_name, "functions": FUNCTIONS})
 
 
 def start_algorithm(request):
+    print("Available algorithms:", ALGORITHMS.keys())
     if request.method == "POST":
         data = json.loads(request.body)
         algorithm_name = data["algorithm"]
         function_name = data["function"]
-        dimensions = int(data["dimensions"])
-        population_size = int(data["population_size"])
-        max_iterations = int(data["max_iterations"])
+
+        algorithm_name.replace('%20', ' ')
+        algorithm_name = unquote(algorithm_name)
+        try:
+            dimensions = int(data["dimensions"])
+            population_size = int(data["population_size"])
+            max_iterations = int(data["max_iterations"])
+        except ValueError:
+            return JsonResponse({"error": "Dimensions, population size, and max iterations must be integers."},
+                                status=400)
 
         if algorithm_name not in ALGORITHMS:
             return JsonResponse({"error": "Algorithm not found."}, status=400)
@@ -61,21 +70,22 @@ def start_algorithm(request):
 
         algorithm_function = ALGORITHMS[algorithm_name]
 
-        if algorithm_name == "Jellyfish Search" or "Jellyfish%20Search":
-            best_solution, best_fitness = algorithm_function(
-                objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
-            )
-        elif algorithm_name == "Artificial Bee Colony" or "Artificial%20Bee%20Colony":
-            best_solution, best_fitness = algorithm_function(
-                objective_function, lower_boundary, upper_boundary, dimensions, population_size, max_iterations
-            )
-        else:
-            return JsonResponse({"error": "Algorithm implementation is missing."}, status=500)
+        print("Available algorithms:", ALGORITHMS.keys())
+        print(algorithm_name)
 
-
-
-
-
+        try:
+            if algorithm_name == "Jellyfish Search":
+                best_solution, best_fitness = algorithm_function(
+                    objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
+                )
+            elif algorithm_name == "Artificial Bee Colony":
+                best_solution, best_fitness = algorithm_function(
+                    objective_function, lower_boundary, upper_boundary, dimensions, population_size, max_iterations
+                )
+            else:
+                return JsonResponse({"error": "Algorithm implementation is missing."}, status=500)
+        except TypeError as e:
+            return JsonResponse({"error": f"Algorithm execution failed: {e}"}, status=500)
 
         results_file_cls = f'results_{algorithm_name.lower().replace(" ", "_")}_{function_name.lower()}.cls'
         results_path_cls = os.path.join(settings.MEDIA_ROOT, results_file_cls)
@@ -94,8 +104,10 @@ def start_algorithm(request):
         wb = Workbook()
         ws = wb.active
         ws.title = "Results"
-        ws.append(["Algorithm", "Function", "Dimensions", "Population Size", "Max Iterations", "Best Solution", "Best Fitness"])
-        ws.append([algorithm_name, function_name, dimensions, population_size, max_iterations, str(best_solution), best_fitness])
+        ws.append(["Algorithm", "Function", "Dimensions", "Population Size", "Max Iterations", "Best Solution",
+                   "Best Fitness"])
+        ws.append([algorithm_name, function_name, dimensions, population_size, max_iterations, str(best_solution),
+                   best_fitness])
         wb.save(results_path_xlsx)
 
         return JsonResponse({
