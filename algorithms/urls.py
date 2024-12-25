@@ -8,7 +8,8 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("algorithm/<str:algorithm_name>/", views.algorithm_test, name="algorithm_test"),
     path("start/", views.start_algorithm, name="start_algorithm"),
-    path("download/<str:filename>/", views.download_results, name="download_results"),
+    path('download/<str:file_format>/', views.download_file, name='download_file'),
+    path('results/', views.result_view, name='result'),
 ]
 
 

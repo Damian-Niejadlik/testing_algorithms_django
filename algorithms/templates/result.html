@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Home</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results for {{ results.algorithm_name }}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <script src="{% static 'js/script.js' %}" defer></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -65,10 +66,16 @@
             color: #94d2bd;
         }
 
-        .back-button {
+        /* Pasek nawigacyjny */
+        .nav-bar {
             position: absolute;
             top: 20px;
             left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-bar a {
             background-color: #0a9396;
             border-radius: 5px;
             color: #fff;
@@ -77,19 +84,28 @@
             font-size: 16px;
         }
 
-        .back-button:hover {
+        .nav-bar a:hover {
             background-color: #005f73;
         }
     </style>
 </head>
 <body>
-    <h1>Select an Algorithm to Test</h1>
-    <ul>
-        {% for algorithm in algorithms %}
-        <li>
-            <a href="{% url 'algorithm_test' algorithm %}">{{ algorithm }}</a>
-        </li>
-        {% endfor %}
-    </ul>
+    <div class="nav-bar">
+        <a href="{% url 'algorithm_test' algorithm_name %}" class="back-button">Wstecz</a>
+        <a href="{% url 'home' %}" class="home-button">Home</a>
+    </div>
+    <h1>Results for Algorithm: {{ results.algorithm_name }}</h1>
+        <p>Function: {{ results.function_name }}</p>
+        <p>Dimensions: {{ results.dimensions }}</p>
+        <p>Population Size: {{ results.population_size }}</p>
+        <p>Max Iterations: {{ results.max_iterations }}</p>
+        <p>Best Solution: {{ results.best_solution }}</p>
+        <p>Best Fitness: {{ results.best_fitness }}</p>
+    <div>
+        <h2>Download Results:</h2>
+            <a href="{% url 'download_file' 'xlsx' %}">Download Excel File</a>
+            <a href="{% url 'download_file' 'csv' %}">Download CSV File</a>
+    </div>
+
 </body>
 </html>

@@ -1,12 +1,10 @@
-import os
 import json
+import csv
 from urllib.parse import unquote
-from django.conf import settings
-from django.http import JsonResponse, FileResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
-from openpyxl import Workbook
+import openpyxl
 from .algorithms import jellyfish_search, artificial_bee_colony
-
 from .test_functions import (
     rastrigin, rastrigin_properties,
     rosenbrock, rosenbrock_properties,
@@ -42,14 +40,12 @@ def algorithm_test(request, algorithm_name):
 
 
 def start_algorithm(request):
-    print("Available algorithms:", ALGORITHMS.keys())
+    global RESULTS
     if request.method == "POST":
         data = json.loads(request.body)
-        algorithm_name = data["algorithm"]
+        algorithm_name = unquote(data["algorithm"])
         function_name = data["function"]
 
-        algorithm_name.replace('%20', ' ')
-        algorithm_name = unquote(algorithm_name)
         try:
             dimensions = int(data["dimensions"])
             population_size = int(data["population_size"])
@@ -58,73 +54,84 @@ def start_algorithm(request):
             return JsonResponse({"error": "Dimensions, population size, and max iterations must be integers."},
                                 status=400)
 
-        if algorithm_name not in ALGORITHMS:
-            return JsonResponse({"error": "Algorithm not found."}, status=400)
-
-        if function_name not in FUNCTIONS:
-            return JsonResponse({"error": "Function not found."}, status=400)
+        if algorithm_name not in ALGORITHMS or function_name not in FUNCTIONS:
+            return JsonResponse({"error": "Invalid algorithm or function."}, status=400)
 
         objective_function, properties = FUNCTIONS[function_name]
         lower_boundary = properties()['lower_boundary']
         upper_boundary = properties()['upper_boundary']
 
         algorithm_function = ALGORITHMS[algorithm_name]
-
-        print("Available algorithms:", ALGORITHMS.keys())
-        print(algorithm_name)
-
         try:
-            if algorithm_name == "Jellyfish Search":
-                best_solution, best_fitness = algorithm_function(
-                    objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
-                )
-            elif algorithm_name == "Artificial Bee Colony":
-                best_solution, best_fitness = algorithm_function(
-                    objective_function, lower_boundary, upper_boundary, dimensions, population_size, max_iterations
-                )
-            else:
-                return JsonResponse({"error": "Algorithm implementation is missing."}, status=500)
+            best_solution, best_fitness = algorithm_function(
+                objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
+            )
         except TypeError as e:
             return JsonResponse({"error": f"Algorithm execution failed: {e}"}, status=500)
 
-        results_file_cls = f'results_{algorithm_name.lower().replace(" ", "_")}_{function_name.lower()}.cls'
-        results_path_cls = os.path.join(settings.MEDIA_ROOT, results_file_cls)
-        with open(results_path_cls, "w") as f:
-            f.write("Algorithm Results\n")
-            f.write(f"Algorithm: {algorithm_name}\n")
-            f.write(f"Function: {function_name}\n")
-            f.write(f"Dimensions: {dimensions}\n")
-            f.write(f"Population Size: {population_size}\n")
-            f.write(f"Max Iterations: {max_iterations}\n")
-            f.write(f"Best Solution: {best_solution}\n")
-            f.write(f"Best Fitness: {best_fitness}\n")
+        request.session['results'] = {
+            "algorithm_name": algorithm_name,
+            "function_name": function_name,
+            "dimensions": dimensions,
+            "population_size": population_size,
+            "max_iterations": max_iterations,
+            "best_solution": str(best_solution),
+            "best_fitness": best_fitness,
+        }
 
-        results_file_xlsx = f'results_{algorithm_name.lower().replace(" ", "_")}_{function_name.lower()}.xlsx'
-        results_path_xlsx = os.path.join(settings.MEDIA_ROOT, results_file_xlsx)
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Results"
-        ws.append(["Algorithm", "Function", "Dimensions", "Population Size", "Max Iterations", "Best Solution",
-                   "Best Fitness"])
-        ws.append([algorithm_name, function_name, dimensions, population_size, max_iterations, str(best_solution),
-                   best_fitness])
-        wb.save(results_path_xlsx)
+        RESULTS = request.session['results'].copy()
 
         return JsonResponse({
             "message": "Algorithm executed successfully.",
-            "results_file_cls": results_file_cls,
-            "results_file_xlsx": results_file_xlsx,
-            "benchmark_output": os.path.join("benchmarks", f"benchmark_{algorithm_name.lower().replace(' ', '_')}.csv")
+            "download_links": {
+                "xlsx": "/download/results.xlsx",
+                "csv": "/download/results.csv",
+            }
         })
-
     return HttpResponse(status=400)
 
 
-def download_results(request, filename):
-    file_path = os.path.join(settings.MEDIA_ROOT, filename)
-    if os.path.exists(file_path):
-        response = FileResponse(open(file_path, "rb"), content_type="application/octet-stream")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+def download_file(request, file_format):
+    if file_format not in ['xlsx', 'csv']:
+        return HttpResponse("Invalid format requested.", status=400)
+
+    if file_format == 'xlsx':
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="results.xlsx"'
+        generate_excel_file(response)
         return response
-    else:
-        return HttpResponse("File not found.", status=404)
+
+    elif file_format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="results.csv"'
+        generate_csv_file(response)
+        return response
+
+
+def generate_excel_file(response):
+    global RESULTS
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Results"
+    ws.append(["Algorithm name", "Function name", "Dimensions", "Population size", "Max iterations", "Bestsolution",
+               "Best fitness"])
+    ws.append([values for values in RESULTS.values()])
+    wb.save(response)
+
+
+def generate_csv_file(response):
+    global RESULTS
+    writer = csv.writer(response)
+    writer.writerow(
+        ["Algorithm name", "Function name", "Dimensions", "Population size", "Max iterations", "Bestsolution",
+         "Best fitness"])  # Nagłówki
+    writer.writerow([values for values in RESULTS.values()])
+
+
+def result_view(request):
+    global RESULTS
+    results = request.session.get('results')
+    algorithm_name = RESULTS.get("algorithm_name")
+    if not results:
+        return HttpResponse("No results available.", status=400)
+    return render(request, "result.html", {"results": results, "algorithm_name": algorithm_name})
