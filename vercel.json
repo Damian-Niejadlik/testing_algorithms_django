@@ -25,6 +25,10 @@
     {
       "source": "/(.*)",
       "destination": "/testing_algorithms_django/wsgi.py"
+    },
+    {
+      "source": "/algorithm/(.*)",
+      "destination": "/testing_algorithms_django/wsgi.py"
     }
   ]
 }
