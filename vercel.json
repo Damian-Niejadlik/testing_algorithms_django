@@ -13,22 +13,18 @@
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/download/(.*)",
-      "dest": "/testing_algorithms_django/wsgi.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/testing_algorithms_django/wsgi.py"
-    }
-  ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "http://127.0.0.1:8000/api/$1" },
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/static/(.*)",
+      "destination": "/static/$1"
+    },
+    {
+      "source": "/download/(.*)",
+      "destination": "/testing_algorithms_django/wsgi.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/testing_algorithms_django/wsgi.py"
+    }
   ]
 }
