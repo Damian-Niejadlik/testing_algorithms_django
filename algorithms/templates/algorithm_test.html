@@ -24,23 +24,15 @@
             color: #005f73;
         }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        li {
-            margin: 10px 0;
-        }
-
-        a {
-            text-decoration: none;
-            color: #0a9396;
+        label {
             font-weight: bold;
         }
 
-        a:hover {
-            color: #94d2bd;
+        select, input {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
 
         button {
@@ -51,58 +43,91 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-top: 10px;
         }
 
         button:hover {
             background-color: #0a9396;
         }
 
+        #results {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #results a {
+            text-decoration: none;
+            color: #0a9396;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        #results a:hover {
+            color: #94d2bd;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #0a9396;
+            border-radius: 5px;
+            color: #fff;
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .back-button:hover {
+            background-color: #005f73;
+        }
     </style>
     <script>
         async function startAlgorithm() {
-            const algorithmName = encodeURIComponent("{{ algorithm_name }}"); // Encode algorithm name
-            const functionName = encodeURIComponent(document.getElementById("functionSelect").value); // Encode function name
+            const functionName = document.getElementById("functionSelect").value;
             const dimensions = document.getElementById("dimensions").value;
             const populationSize = document.getElementById("populationSize").value;
             const maxIterations = document.getElementById("maxIterations").value;
 
-            const response = await fetch("{% url 'start_algorithm' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify({
-                    algorithm: algorithmName,
-                    function: functionName,
-                    dimensions: dimensions,
-                    population_size: populationSize,
-                    max_iterations: maxIterations
-                })
-            });
+            try {
+                const response = await fetch("{% url 'start_algorithm' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        algorithm: "{{ algorithm_name }}",
+                        function: functionName,
+                        dimensions: dimensions,
+                        population_size: populationSize,
+                        max_iterations: maxIterations
+                    })
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (response.ok) {
-                const clsDownloadLink = `/download/${data.results_file_cls}`;
-                const xlsxDownloadLink = `/download/${data.results_file_xlsx}`;
-
-                document.getElementById("results").innerHTML = `
-                    <p>Algorithm executed successfully!</p>
-                    <a href="${clsDownloadLink}" download>Download .cls</a><br>
-                    <a href="${xlsxDownloadLink}" download>Download .xlsx</a>
-                `;
-            } else {
-                document.getElementById("results").innerHTML = `<p>Error: ${data.error || "Unknown error occurred"}</p>`;
+                if (response.ok) {
+                    const resultLink = "{% url 'result' %}";
+                    document.getElementById("results").innerHTML = `
+                        <p>Algorithm executed successfully!</p>
+                        <a href="${resultLink}">View Results</a>
+                    `;
+                } else {
+                    document.getElementById("results").innerHTML = `<p>Error: ${data.error || "Unknown error occurred"}</p>`;
+                }
+            } catch (error) {
+                document.getElementById("results").innerHTML = `<p>Error: ${error.message}</p>`;
             }
         }
     </script>
 </head>
 <body>
+    <a href="{% url 'home' %}" class="back-button">Wstecz</a>
     <h1>Test Algorithm: {{ algorithm_name }}</h1>
     <label for="functionSelect">Select Function:</label>
     <select id="functionSelect">
-        {% for func_name in functions %}
+        {% for func_name in functions.keys %}
         <option value="{{ func_name }}">{{ func_name }}</option>
         {% endfor %}
     </select><br><br>

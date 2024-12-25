@@ -19,8 +19,12 @@
       "dest": "/static/$1"
     },
     {
+      "src": "/download/(.*)",
+      "dest": "/testing_algorithms_django/wsgi.py"
+    },
+    {
       "src": "/(.*)",
-      "dest": "testing_algorithms_django/wsgi.py"
+      "dest": "/testing_algorithms_django/wsgi.py"
     }
   ]
 }
