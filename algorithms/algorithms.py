@@ -101,11 +101,19 @@ def jellyfish_search(objective_function, dimensions, lower_boundary, upper_bound
 
 
 def artificial_bee_colony(objective_function, lower_boundary, upper_boundary, dimensions, population_size, max_iterations, limit=10):
+    dimensions = int(dimensions)
+    population_size = int(population_size)
+    max_iterations = int(max_iterations)
+
     population = np.random.uniform(lower_boundary, upper_boundary, (population_size, dimensions))
-    fitness = np.array([1 / (1 + objective_function(solution)) if objective_function(solution) >= 0 else 1 + abs(objective_function(solution)) for solution in population])
+    fitness = np.array([
+        1 / (1 + objective_function(solution)) if objective_function(solution) >= 0
+        else 1 + abs(objective_function(solution))
+        for solution in population
+    ])
     best_solution = population[np.argmax(fitness)]
     best_fitness = objective_function(best_solution)
-    failures = np.zeros(population_size)
+    failures = np.zeros(population_size, dtype=int)
 
     def generate_new_solution(index):
         dimension = random.randint(0, dimensions - 1)
@@ -118,7 +126,11 @@ def artificial_bee_colony(objective_function, lower_boundary, upper_boundary, di
         new_solution[dimension] += (random.random() - 0.5) * 2 * diff
         new_solution = np.clip(new_solution, lower_boundary, upper_boundary)
 
-        new_fitness = 1 / (1 + objective_function(new_solution)) if objective_function(new_solution) >= 0 else 1 + abs(objective_function(new_solution))
+        new_fitness = (
+            1 / (1 + objective_function(new_solution))
+            if objective_function(new_solution) >= 0
+            else 1 + abs(objective_function(new_solution))
+        )
         if new_fitness > fitness[index]:
             population[index] = new_solution
             fitness[index] = new_fitness
@@ -138,7 +150,11 @@ def artificial_bee_colony(objective_function, lower_boundary, upper_boundary, di
         for i in range(population_size):
             if failures[i] > limit:
                 population[i] = np.random.uniform(lower_boundary, upper_boundary, dimensions)
-                fitness[i] = 1 / (1 + objective_function(population[i])) if objective_function(population[i]) >= 0 else 1 + abs(objective_function(population[i]))
+                fitness[i] = (
+                    1 / (1 + objective_function(population[i]))
+                    if objective_function(population[i]) >= 0
+                    else 1 + abs(objective_function(population[i]))
+                )
                 failures[i] = 0
 
         current_best = population[np.argmax(fitness)]

@@ -4,7 +4,7 @@ from urllib.parse import unquote
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 import openpyxl
-from .algorithms import jellyfish_search, artificial_bee_colony
+from .algorithms import jellyfish_search, artificial_bee_colony, benchmark_algorithm
 from .test_functions import (
     rastrigin, rastrigin_properties,
     rosenbrock, rosenbrock_properties,

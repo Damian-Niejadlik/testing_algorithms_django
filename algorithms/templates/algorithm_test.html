@@ -129,7 +129,7 @@
                         <a href="${resultLink}">View Results</a>
                     `;
                 } else {
-                    document.getElementById("results").innerHTML = `<p>Error: ${data.error || "Unknown error occurred"}</p>`;
+                    document.getElementById("results").innerHTML = `<p>Error: ${data.error  || "Unknown error occurred"}</p>`;
                 }
             } catch (error) {
                 document.getElementById("results").innerHTML = `<p>Error: ${error.message}</p>`;
