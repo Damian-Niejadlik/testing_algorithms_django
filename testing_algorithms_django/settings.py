@@ -103,3 +103,5 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'results')
 MEDIA_URL = '/media/'
+
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
