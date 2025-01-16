@@ -19,16 +19,12 @@
       "destination": "/static/$1"
     },
     {
-      "source": "/download/(.*)",
-      "destination": "/testing_algorithms_django/wsgi.py"
+      "source": "/media/(.*)",
+      "destination": "/results/$1"
     },
     {
       "source": "/(.*)",
-      "destination": "/testing_algorithms_django/wsgi.py"
-    },
-    {
-      "source": "/algorithm/(.*)",
-      "destination": "/testing_algorithms_django/wsgi.py"
+      "destination": "testing_algorithms_django/wsgi.py"
     }
   ]
 }
