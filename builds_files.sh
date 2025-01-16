@@ -3,5 +3,5 @@
 # Install dependencies
 pip install -r requirements.txt
 
-# Run collectstatic
+# Collect static files
 python3 manage.py collectstatic --noinput
