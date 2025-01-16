@@ -127,6 +127,8 @@ def start_algorithm(request):
 #          "Best fitness"])  # Nagłówki
 #     writer.writerow([values for values in RESULTS.values()])
 
+#test
+
 
 def result_view(request):
     global RESULTS
