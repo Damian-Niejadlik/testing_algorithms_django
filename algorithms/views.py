@@ -91,45 +91,6 @@ def start_algorithm(request):
     return HttpResponse(status=400)
 
 
-# def download_file(request, file_format):
-#     if file_format not in ['xlsx', 'csv']:
-#         return HttpResponse("Invalid format requested.", status=400)
-#
-#     if file_format == 'xlsx':
-#         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-#         response['Content-Disposition'] = 'attachment; filename="results.xlsx"'
-#         generate_excel_file(response)
-#         return response
-#
-#     elif file_format == 'csv':
-#         response = HttpResponse(content_type='text/csv')
-#         response['Content-Disposition'] = 'attachment; filename="results.csv"'
-#         generate_csv_file(response)
-#         return response
-
-
-# def generate_excel_file(response):
-#     global RESULTS
-#     wb = openpyxl.Workbook()
-#     ws = wb.active
-#     ws.title = "Results"
-#     ws.append(["Algorithm name", "Function name", "Dimensions", "Population size", "Max iterations", "Bestsolution",
-#                "Best fitness"])
-#     ws.append([values for values in RESULTS.values()])
-#     wb.save(response)
-#
-#
-# def generate_csv_file(response):
-#     global RESULTS
-#     writer = csv.writer(response)
-#     writer.writerow(
-#         ["Algorithm name", "Function name", "Dimensions", "Population size", "Max iterations", "Bestsolution",
-#          "Best fitness"])  # Nagłówki
-#     writer.writerow([values for values in RESULTS.values()])
-
-#test
-
-
 def result_view(request):
     global RESULTS
     results = request.session.get('results')
@@ -140,63 +101,37 @@ def result_view(request):
 
 
 def download_file(request, file_format):
-    # Get results from the session instead of global variable
-    global RESULTS
-
-    # Check if we have results to work with
-    print(RESULTS)
-    if not RESULTS:
-        return JsonResponse({
-            'error': 'No results found. Please run the algorithm first.'
-        }, status=400)
-
     if file_format not in ['xlsx', 'csv']:
-        return JsonResponse({
-            'error': 'Invalid format requested.'
-        }, status=400)
+        return HttpResponse("Invalid format requested.", status=400)
 
     if file_format == 'xlsx':
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="results.xlsx"'
-        generate_excel_file(response, RESULTS)
+        generate_excel_file(response)
         return response
 
-    else:  # csv case
+    elif file_format == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="results.csv"'
-        generate_csv_file(response, RESULTS)
+        generate_csv_file(response)
         return response
 
 
-def generate_excel_file(response, results):
-    # Pass results as parameter instead of using global
+def generate_excel_file(response):
+    global RESULTS
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Results"
-
-    # Define headers
-    headers = ["Algorithm name", "Function name", "Dimensions",
-               "Population size", "Max iterations", "Best solution",
-               "Best fitness"]
-    ws.append(headers)
-
-    # Add the results row
-    ws.append([values for values in results.values()])
-
+    ws.append(["Algorithm name", "Function name", "Dimensions", "Population size", "Max iterations", "Bestsolution",
+               "Best fitness"])
+    ws.append([values for values in RESULTS.values()])
     wb.save(response)
 
 
-def generate_csv_file(response, results):
-    # Pass results as parameter instead of using global
+def generate_csv_file(response):
+    global RESULTS
     writer = csv.writer(response)
-
-    # Define headers
-    headers = ["Algorithm name", "Function name", "Dimensions",
-               "Population size", "Max iterations", "Best solution",
-               "Best fitness"]
-    writer.writerow(headers)
-
-    # Add the results row
-    writer.writerow([values for values in results.values()])
+    writer.writerow(
+        ["Algorithm name", "Function name", "Dimensions", "Population size", "Max iterations", "Bestsolution",
+         "Best fitness"])  # Nagłówki
+    writer.writerow([values for values in RESULTS.values()])
