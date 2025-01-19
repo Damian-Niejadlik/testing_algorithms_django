@@ -57,27 +57,6 @@ button:hover {
     color: #94d2bd;
 }
 
-.nav-bar {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    display: flex;
-    gap: 10px;
-}
-
-.nav-bar a {
-    background-color: #0a9396;
-    border-radius: 5px;
-    color: #fff;
-    padding: 10px 15px;
-    text-decoration: none;
-    font-size: 16px;
-}
-
-.nav-bar a:hover {
-    background-color: #005f73;
-}
-
 .back-button {
     position: absolute;
     top: 20px;
@@ -105,7 +84,6 @@ a {
     display: inline-block; /* Umożliwia użycie paddingu */
 }
 
-
 a:hover {
     color: #ffffff;
     background-color: #0a9396;
@@ -116,6 +94,7 @@ a:active {
     transform: translateY(1px);
     background-color: #005f5f;
 }
+
 
 li {
     margin: 15px 0;
@@ -128,7 +107,27 @@ li:hover::before {
     color: #ffffff;
 }
 
-
 a, li::before {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-bar {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.nav-bar a {
+    background-color: #0a9396;
+    border-radius: 5px;
+    color: #fff;
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.nav-bar a:hover {
+    background-color: #005f73;
 }
