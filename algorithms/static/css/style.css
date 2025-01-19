@@ -15,23 +15,15 @@ h1 {
     color: #005f73;
 }
 
-ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-li {
-    margin: 40px 0;
-}
-
-a {
-    text-decoration: none;
-    color: #0a9396;
+label {
     font-weight: bold;
 }
 
-a:hover {
-    color: #94d2bd;
+select, input {
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
 button {
@@ -42,8 +34,101 @@ button {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    margin-top: 10px;
 }
 
 button:hover {
     background-color: #0a9396;
+}
+
+#results {
+    margin-top: 20px;
+    text-align: center;
+}
+
+#results a {
+    text-decoration: none;
+    color: #0a9396;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+#results a:hover {
+    color: #94d2bd;
+}
+
+.nav-bar {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.nav-bar a {
+    background-color: #0a9396;
+    border-radius: 5px;
+    color: #fff;
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.nav-bar a:hover {
+    background-color: #005f73;
+}
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #0a9396;
+    border-radius: 5px;
+    color: #fff;
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.back-button:hover {
+    background-color: #005f73;
+}
+
+a {
+    text-decoration: none;
+    color: #0a9396;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 8px 16px;
+    border-radius: 8px; /* Zaokrąglone rogi */
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease; /* Płynne przejścia */
+    display: inline-block; /* Umożliwia użycie paddingu */
+}
+
+
+a:hover {
+    color: #ffffff;
+    background-color: #0a9396;
+    transform: translateY(-2px);
+}
+
+a:active {
+    transform: translateY(1px);
+    background-color: #005f5f;
+}
+
+li {
+    margin: 15px 0;
+    list-style-type: none;
+    position: relative;
+    padding-left: 24px;
+}
+
+li:hover::before {
+    color: #ffffff;
+}
+
+
+a, li::before {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
