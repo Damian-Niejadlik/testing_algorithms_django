@@ -11,20 +11,21 @@
       "config": {
         "distDir": "staticfiles"
       }
+
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/static/(.*)",
-      "destination": "/static/$1"
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
     },
     {
-      "source": "/media/(.*)",
-      "destination": "/results/$1"
+      "src": "/media/(.*)",
+      "dest": "/results/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "testing_algorithms_django/wsgi.py"
+      "src": "/(.*)",
+      "dest": "testing_algorithms_django/wsgi.py"
     }
   ]
 }
