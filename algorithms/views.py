@@ -91,10 +91,24 @@ def start_algorithm(request):
     return HttpResponse(status=400)
 
 
+# def result_view(request):
+#     global RESULTS
+#     results = request.session.get('results')
+#     algorithm_name = RESULTS.get("algorithm_name")
+#     if not results:
+#         return HttpResponse("No results available.", status=400)
+#     return render(request, "result.html", {"results": results, "algorithm_name": algorithm_name})
+
+
 def result_view(request):
     global RESULTS
     results = request.session.get('results')
     algorithm_name = RESULTS.get("algorithm_name")
+
+    # Debug print
+    print("Results:", results)
+    print("Algorithm name:", algorithm_name)
+
     if not results:
         return HttpResponse("No results available.", status=400)
     return render(request, "result.html", {"results": results, "algorithm_name": algorithm_name})

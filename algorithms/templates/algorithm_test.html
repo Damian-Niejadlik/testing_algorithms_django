@@ -6,48 +6,20 @@
     <title>Algorithm Test: {{ algorithm_name }}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'js/script.js' %}" defer></script>
     <script>
-        async function startAlgorithm() {
-            const functionName = document.getElementById("functionSelect").value;
-            const dimensions = document.getElementById("dimensions").value;
-            const populationSize = document.getElementById("populationSize").value;
-            const maxIterations = document.getElementById("maxIterations").value;
-
-            try {
-                const response = await fetch("{% url 'start_algorithm' %}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": "{{ csrf_token }}"
-                    },
-                    body: JSON.stringify({
-                        algorithm: "{{ algorithm_name }}",
-                        function: functionName,
-                        dimensions: dimensions,
-                        population_size: populationSize,
-                        max_iterations: maxIterations
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    const resultLink = "{% url 'result' %}";
-                    document.getElementById("results").innerHTML = `
-                        <p>Algorithm executed successfully!</p>
-                        <a href="${resultLink}">View Results</a>
-                    `;
-                } else {
-                    document.getElementById("results").innerHTML = `<p>Error: ${data.error  || "Unknown error occurred"}</p>`;
-                }
-            } catch (error) {
-                document.getElementById("results").innerHTML = `<p>Error: ${error.message}</p>`;
-            }
-        }
+    const algorithmData = {
+        url: "{% url 'start_algorithm' %}",
+        csrfToken: "{{ csrf_token }}",
+        algorithmName: "{{ algorithm_name }}"
+    };
+    const resultUrl = "{% url 'result' %}";
     </script>
 </head>
 <body>
-    <a href="{% url 'home' %}" class="back-button">Wstecz</a>
+    <div class="nav-bar">
+        <a href="{% url 'home' %}" class="back-button">Wstecz</a>
+    </div>
     <h1>Test Algorithm: {{ algorithm_name }}</h1>
     <label for="functionSelect">Select Function:</label>
     <select id="functionSelect">

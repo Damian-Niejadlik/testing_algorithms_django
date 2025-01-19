@@ -9,8 +9,8 @@
 </head>
 <body>
     <div class="nav-bar">
-        <a href="{% url 'algorithm_test' algorithm_name %}" class="back-button">Wstecz</a>
         <a href="{% url 'home' %}" class="home-button">Home</a>
+        <a href="{% url 'algorithm_test' algorithm_name %}" class="back-button">Wstecz</a>
     </div>
     <h1>Results for Algorithm: {{ results.algorithm_name }}</h1>
         <p>Function: {{ results.function_name }}</p>
