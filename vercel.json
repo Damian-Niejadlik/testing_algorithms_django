@@ -1,31 +1,27 @@
 {
-  "builds": [
-    {
-      "src": "testing_algorithms_django/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.12" }
-    },
-    {
-      "src": "build_files.sh",
-      "use": "@vercel/static",
-      "config": {
-        "distDir": "staticfiles"
-      }
-
+"version": 2,
+"builds": [
+  {
+    "src": "testing_algorithms_django/wsgi.py",
+    "use": "@vercel/python",
+    "config": {
+      "maxLambdaSize": "15mb",
+      "runtime": "python3.12"
     }
-  ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/media/(.*)",
-      "dest": "/results/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "testing_algorithms_django/wsgi.py"
+  },
+  {
+    "src": "build_files.sh",
+    "use": "@vercel/static-build",
+    "config": {
+      "distDir": "staticfiles"
     }
-  ]
+  }
+],
+"routes": [
+  {
+    "src": "/(.*)",
+    "dest": "testing_algorithms_django/wsgi.py"
+  }
+],
+"outputDirectory": "staticfiles"
 }
