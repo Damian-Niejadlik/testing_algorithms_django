@@ -3,6 +3,20 @@ import random
 import json
 import pickle
 
+import threading
+
+
+is_paused = threading.Event()
+is_paused.set()
+
+
+def pause_algorithm():
+    is_paused.clear()
+
+
+def resume_algorithm():
+    is_paused.set()
+
 
 class AlgorithmState:
     def __init__(self, iteration, population, fitness, best_solution, best_fitness):
@@ -68,6 +82,7 @@ def jellyfish_search(objective_function, dimensions, lower_boundary, upper_bound
     gamma = 0.1
 
     for iteration in range(max_iterations):
+        is_paused.wait()
         for current in range(population_size):
             time_control = abs((1 - iteration / max_iterations) * (2 * np.random.rand() - 1))
 
@@ -77,7 +92,8 @@ def jellyfish_search(objective_function, dimensions, lower_boundary, upper_bound
                 jellyfish[current] = jellyfish[current] + np.random.rand() * ocean_current
             else:
                 if np.random.rand() > 1 - time_control:
-                    jellyfish[current] = jellyfish[current] + gamma * np.random.rand() * (upper_boundary - lower_boundary)
+                    jellyfish[current] = jellyfish[current] + gamma * np.random.rand() * (
+                                upper_boundary - lower_boundary)
                 else:
                     random_number = np.random.randint(population_size)
                     direction = (
@@ -100,7 +116,8 @@ def jellyfish_search(objective_function, dimensions, lower_boundary, upper_bound
     return best_solution, best_fitness
 
 
-def artificial_bee_colony(objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations):
+def artificial_bee_colony(objective_function, dimensions, lower_boundary, upper_boundary, population_size,
+                          max_iterations):
     solutions = np.random.uniform(lower_boundary, upper_boundary, (population_size, dimensions))
     values = np.full(population_size, np.inf)
     best_solution = None
@@ -168,6 +185,7 @@ def artificial_bee_colony(objective_function, dimensions, lower_boundary, upper_
     iterations_without_improvement = np.zeros(population_size)
 
     for _ in range(max_iterations):
+        is_paused.wait()
         employed_bees_phase()
         remember_best_solution()
 
@@ -178,7 +196,3 @@ def artificial_bee_colony(objective_function, dimensions, lower_boundary, upper_
         remember_best_solution()
 
     return best_solution, best_value
-
-
-
-

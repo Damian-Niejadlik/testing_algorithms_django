@@ -16,6 +16,7 @@ async function startAlgorithm() {
     const dimensions = document.getElementById("dimensions").value;
     const populationSize = document.getElementById("populationSize").value;
     const maxIterations = document.getElementById("maxIterations").value;
+    document.getElementById("pauseButton").style.display = "inline";
 
     try {
         const response = await fetch(algorithmData.url, {
@@ -47,5 +48,34 @@ async function startAlgorithm() {
         }
     } catch (error) {
         document.getElementById("results").innerHTML = `<p>Error: ${error.message}</p>`;
+    }
+}
+
+
+async function pauseAlgorithm() {
+    try {
+        const response = await fetch("/pause/", { method: "POST" });
+        const data = await response.json();
+        if (response.ok) {
+            document.getElementById("pauseButton").style.display = "none";
+            document.getElementById("resumeButton").style.display = "inline";
+            console.log(data.message);
+        }
+    } catch (error) {
+        console.error("Error pausing algorithm:", error);
+    }
+}
+
+async function resumeAlgorithm() {
+    try {
+        const response = await fetch("/resume/", { method: "POST" });
+        const data = await response.json();
+        if (response.ok) {
+            document.getElementById("resumeButton").style.display = "none";
+            document.getElementById("pauseButton").style.display = "inline";
+            console.log(data.message);
+        }
+    } catch (error) {
+        console.error("Error resuming algorithm:", error);
     }
 }
