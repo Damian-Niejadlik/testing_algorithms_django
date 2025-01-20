@@ -13,5 +13,11 @@ urlpatterns = [
 ]
 
 
+urlpatterns += [
+    path("pause/", views.pause_view, name="pause_algorithm"),
+    path("resume/", views.resume_view, name="resume_algorithm"),
+]
+
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

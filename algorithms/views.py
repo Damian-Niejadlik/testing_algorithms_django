@@ -3,8 +3,9 @@ import csv
 from urllib.parse import unquote
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 import openpyxl
-from .algorithms import jellyfish_search, artificial_bee_colony, benchmark_algorithm
+from .algorithms import jellyfish_search, artificial_bee_colony, pause_algorithm, resume_algorithm
 from .test_functions import (
     rastrigin, rastrigin_properties,
     rosenbrock, rosenbrock_properties,
@@ -29,18 +30,36 @@ ALGORITHMS = {
 }
 
 
+@csrf_exempt
+def pause_view(request):
+    if request.method == "POST":
+        pause_algorithm()
+        request.session['paused'] = True
+        return JsonResponse({"message": "Algorithm paused successfully."})
+    return HttpResponse(status=400)
+
+@csrf_exempt
+def resume_view(request):
+    if request.method == "POST":
+        resume_algorithm()
+        request.session['paused'] = False
+        return JsonResponse({"message": "Algorithm resumed successfully."})
+    return HttpResponse(status=400)
+
+
 def home(request):
     algorithms = list(ALGORITHMS.keys())
     return render(request, "home.html", {"algorithms": algorithms})
 
 
 def algorithm_test(request, algorithm_name):
-    algorithm_name = unquote(algorithm_name)  # Decode URL parameter
+    algorithm_name = unquote(algorithm_name)
     return render(request, "algorithm_test.html", {"algorithm_name": algorithm_name, "functions": FUNCTIONS})
 
 
 def start_algorithm(request):
     global RESULTS
+    request.session['paused'] = False
     if request.method == "POST":
         data = json.loads(request.body)
         algorithm_name = unquote(data["algorithm"])
@@ -91,23 +110,11 @@ def start_algorithm(request):
     return HttpResponse(status=400)
 
 
-# def result_view(request):
-#     global RESULTS
-#     results = request.session.get('results')
-#     algorithm_name = RESULTS.get("algorithm_name")
-#     if not results:
-#         return HttpResponse("No results available.", status=400)
-#     return render(request, "result.html", {"results": results, "algorithm_name": algorithm_name})
-
 
 def result_view(request):
     global RESULTS
     results = request.session.get('results')
     algorithm_name = RESULTS.get("algorithm_name")
-
-    # Debug print
-    print("Results:", results)
-    print("Algorithm name:", algorithm_name)
 
     if not results:
         return HttpResponse("No results available.", status=400)
@@ -115,10 +122,8 @@ def result_view(request):
 
 
 def download_file(request, file_format):
-    # Get results from the session instead of global variable
     results = request.session.get('results')
 
-    # Check if we have results to work with
     if not results:
         return JsonResponse({
             'error': 'No results found. Please run the algorithm first.'
@@ -137,7 +142,7 @@ def download_file(request, file_format):
         generate_excel_file(response, results)
         return response
 
-    else:  # csv case
+    else:
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="results.csv"'
         generate_csv_file(response, results)
@@ -145,18 +150,15 @@ def download_file(request, file_format):
 
 
 def generate_excel_file(response, results):
-    # Pass results as parameter instead of using global
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Results"
 
-    # Define headers
     headers = ["Algorithm name", "Function name", "Dimensions",
                "Population size", "Max iterations", "Best solution",
                "Best fitness"]
     ws.append(headers)
 
-    # Add the results row
     ws.append([results.get(key, '') for key in [
         'algorithm_name', 'function_name', 'dimensions',
         'population_size', 'max_iterations', 'best_solution',
@@ -167,16 +169,13 @@ def generate_excel_file(response, results):
 
 
 def generate_csv_file(response, results):
-    # Pass results as parameter instead of using global
     writer = csv.writer(response)
 
-    # Define headers
     headers = ["Algorithm name", "Function name", "Dimensions",
                "Population size", "Max iterations", "Best solution",
                "Best fitness"]
     writer.writerow(headers)
 
-    # Add the results row
     writer.writerow([results.get(key, '') for key in [
         'algorithm_name', 'function_name', 'dimensions',
         'population_size', 'max_iterations', 'best_solution',
