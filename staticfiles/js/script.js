@@ -12,10 +12,15 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function startAlgorithm() {
-    const functionName = document.getElementById("functionSelect").value;
+    const selectedFunctions = Array.from(document.querySelectorAll("input[type='checkbox']:checked")).map(checkbox => checkbox.value);
+
+
+    console.log("Selected functions:", selectedFunctions);
+
     const dimensions = document.getElementById("dimensions").value;
     const populationSize = document.getElementById("populationSize").value;
     const maxIterations = document.getElementById("maxIterations").value;
+
     document.getElementById("pauseButton").style.display = "inline";
 
     try {
@@ -27,7 +32,7 @@ async function startAlgorithm() {
             },
             body: JSON.stringify({
                 algorithm: algorithmData.algorithmName,
-                function: functionName,
+                functions: selectedFunctions,  // Poprawione, bo teraz to tablica
                 dimensions: dimensions,
                 population_size: populationSize,
                 max_iterations: maxIterations
@@ -38,7 +43,6 @@ async function startAlgorithm() {
 
         if (response.ok) {
             const resultLink = resultUrl;
-            console.log(resultLink);
             document.getElementById("results").innerHTML = `
                 <p>Algorithm executed successfully!</p>
                 <a href="${resultLink}">View Results</a>
@@ -79,3 +83,19 @@ async function resumeAlgorithm() {
         console.error("Error resuming algorithm:", error);
     }
 }
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    const toggleButton = document.getElementById("toggle-functions");
+    const checkboxList = document.getElementById("checkbox-list");
+
+    toggleButton.addEventListener("click", function() {
+        if (checkboxList.style.display === "none" || checkboxList.style.display === "") {
+            checkboxList.style.display = "flex";
+            toggleButton.textContent = "Schowaj funkcje";
+        } else {
+            checkboxList.style.display = "none";
+            toggleButton.textContent = "Pokaż/Wybierz funkcje";
+        }
+    });
+});

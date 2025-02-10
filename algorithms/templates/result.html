@@ -12,17 +12,24 @@
         <a href="{% url 'home' %}" class="home-button">Home</a>
         <a href="{% url 'algorithm_test' algorithm_name %}" class="back-button">Wstecz</a>
     </div>
+
     <h1>Results for Algorithm: {{ results.algorithm_name }}</h1>
-        <p>Function: {{ results.function_name }}</p>
-        <p>Dimensions: {{ results.dimensions }}</p>
-        <p>Population Size: {{ results.population_size }}</p>
-        <p>Max Iterations: {{ results.max_iterations }}</p>
-        <p>Best Solution: {{ results.best_solution }}</p>
-        <p>Best Fitness: {{ results.best_fitness }}</p>
+
+    <p><strong>Dimensions:</strong> {{ results.dimensions }}</p>
+    <p><strong>Population Size:</strong> {{ results.population_size }}</p>
+    <p><strong>Max Iterations:</strong> {{ results.max_iterations }}</p>
+
+    {% for result in results.results_list %}
+        <h2>Function: {{ result.function_name }}</h2>
+        <p><strong>Best Solution:</strong> {{ result.best_solution }}</p>
+        <p><strong>Best Fitness:</strong> {{ result.best_fitness }}</p>
+        <hr>
+    {% endfor %}
+
     <div>
         <h2>Download Results:</h2>
-            <a href="{% url 'download_file' 'xlsx' %}">Download Excel File</a>
-            <a href="{% url 'download_file' 'csv' %}">Download CSV File</a>
+        <a href="{% url 'download_file' 'xlsx' %}">Download Excel File</a>
+        <a href="{% url 'download_file' 'csv' %}">Download CSV File</a>
     </div>
 
 </body>

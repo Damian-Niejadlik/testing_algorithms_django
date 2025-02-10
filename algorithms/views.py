@@ -57,45 +57,64 @@ def algorithm_test(request, algorithm_name):
     return render(request, "algorithm_test.html", {"algorithm_name": algorithm_name, "functions": FUNCTIONS})
 
 
+import json
+from urllib.parse import unquote
+from django.http import JsonResponse, HttpResponse
+
 def start_algorithm(request):
     global RESULTS
     request.session['paused'] = False
+
     if request.method == "POST":
         data = json.loads(request.body)
         algorithm_name = unquote(data["algorithm"])
-        function_name = data["function"]
+        function_names = data.get("functions", [])  # Pobiera listę wybranych funkcji
+
+        # Sprawdzenie, czy przekazano listę funkcji
+        if not isinstance(function_names, list) or not function_names:
+            return JsonResponse({"error": "At least one function must be selected."}, status=400)
 
         try:
             dimensions = int(data["dimensions"])
             population_size = int(data["population_size"])
             max_iterations = int(data["max_iterations"])
         except ValueError:
-            return JsonResponse({"error": "Dimensions, population size, and max iterations must be integers."},
-                                status=400)
+            return JsonResponse({"error": "Dimensions, population size, and max iterations must be integers."}, status=400)
 
-        if algorithm_name not in ALGORITHMS or function_name not in FUNCTIONS:
-            return JsonResponse({"error": "Invalid algorithm or function."}, status=400)
+        if algorithm_name not in ALGORITHMS:
+            return JsonResponse({"error": "Invalid algorithm."}, status=400)
 
-        objective_function, properties = FUNCTIONS[function_name]
-        lower_boundary = properties()['lower_boundary']
-        upper_boundary = properties()['upper_boundary']
-
+        results_list = []
         algorithm_function = ALGORITHMS[algorithm_name]
-        try:
-            best_solution, best_fitness = algorithm_function(
-                objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
-            )
-        except TypeError as e:
-            return JsonResponse({"error": f"Algorithm execution failed: {e}"}, status=500)
+
+        for function_name in function_names:
+            if function_name not in FUNCTIONS:
+                continue  # Pomija błędne funkcje
+
+            objective_function, properties = FUNCTIONS[function_name]
+            lower_boundary = properties()['lower_boundary']
+            upper_boundary = properties()['upper_boundary']
+
+            try:
+                best_solution, best_fitness = algorithm_function(
+                    objective_function, dimensions, lower_boundary, upper_boundary, population_size, max_iterations
+                )
+            except TypeError as e:
+                return JsonResponse({"error": f"Algorithm execution failed for {function_name}: {e}"}, status=500)
+
+            results_list.append({
+                "function_name": function_name,
+                "best_solution": str(best_solution),
+                "best_fitness": best_fitness,
+            })
 
         request.session['results'] = {
             "algorithm_name": algorithm_name,
-            "function_name": function_name,
+            "functions": function_names,
             "dimensions": dimensions,
             "population_size": population_size,
             "max_iterations": max_iterations,
-            "best_solution": str(best_solution),
-            "best_fitness": best_fitness,
+            "results_list": results_list
         }
 
         RESULTS = request.session['results'].copy()
@@ -105,8 +124,10 @@ def start_algorithm(request):
             "download_links": {
                 "xlsx": "/download/results.xlsx",
                 "csv": "/download/results.csv",
-            }
+            },
+            "results": results_list
         })
+
     return HttpResponse(status=400)
 
 
@@ -159,11 +180,30 @@ def generate_excel_file(response, results):
                "Best fitness"]
     ws.append(headers)
 
-    ws.append([results.get(key, '') for key in [
-        'algorithm_name', 'function_name', 'dimensions',
-        'population_size', 'max_iterations', 'best_solution',
-        'best_fitness'
-    ]])
+    # Pobieranie głównych ustawień
+    algorithm_name = results.get('algorithm_name', '')
+    dimensions = results.get('dimensions', '')
+    population_size = results.get('population_size', '')
+    max_iterations = results.get('max_iterations', '')
+
+    results_list = results.get('results_list', [])
+
+    # Jeśli lista wyników jest pusta, logujemy problem
+    if not results_list:
+        print("Brak funkcji testowych w results:", results)
+        return
+
+    # Iterujemy po każdej funkcji z osobna
+    for result in results_list:
+        ws.append([
+            algorithm_name,
+            result.get('function_name', ''),
+            dimensions,
+            population_size,
+            max_iterations,
+            result.get('best_solution', ''),
+            result.get('best_fitness', '')
+        ])
 
     wb.save(response)
 
@@ -176,8 +216,24 @@ def generate_csv_file(response, results):
                "Best fitness"]
     writer.writerow(headers)
 
-    writer.writerow([results.get(key, '') for key in [
-        'algorithm_name', 'function_name', 'dimensions',
-        'population_size', 'max_iterations', 'best_solution',
-        'best_fitness'
-    ]])
+    algorithm_name = results.get('algorithm_name', '')
+    dimensions = results.get('dimensions', '')
+    population_size = results.get('population_size', '')
+    max_iterations = results.get('max_iterations', '')
+
+    results_list = results.get('results_list', [])
+
+    if not results_list:
+        print("Brak funkcji testowych w results:", results)
+        return
+
+    for result in results_list:
+        writer.writerow([
+            algorithm_name,
+            result.get('function_name', ''),
+            dimensions,
+            population_size,
+            max_iterations,
+            result.get('best_solution', ''),
+            result.get('best_fitness', '')
+        ])
